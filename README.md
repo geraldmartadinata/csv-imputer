@@ -1,124 +1,104 @@
 # Martadinata CSV Imputer & 3NF Normalizer
 
 [![CLI Tool](https://img.shields.io/badge/CLI_Tool-Production_Ready-emerald?style=for-the-badge&logo=python&logoColor=white)](#)
+[![Interactive Menu](https://img.shields.io/badge/UI-Interactive_Terminal_Menu-cyan?style=for-the-badge&logo=gnubash&logoColor=white)](#)
 [![Normalization](https://img.shields.io/badge/Normalization-3NF_Certified-blue?style=for-the-badge&logo=databricks&logoColor=white)](#)
 [![High Throughput](https://img.shields.io/badge/Throughput-8%2C700+_rows%2Fsec-purple?style=for-the-badge&logo=apachespark&logoColor=white)](#)
-[![Python Version](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=for-the-badge)](#)
 
-> **Industrial-grade, vectorized CLI utility** designed to clean, impute missing values, and normalize uncurated transaction spreadsheets (e.g., Online Retail 1M+ rows) into strict **Third Normal Form (3NF)** relational database schemas.
+> **Industrial-grade, vectorized CLI utility** designed to clean, impute missing values, normalize transaction spreadsheets into strict **Third Normal Form (3NF)** relational database schemas, and verify dataset integrity with automated audit reports.
 
 ---
 
-## 📌 Problem Statement
+## 📌 Features
 
-Raw retail datasets frequently suffer from severe data quality deficiencies:
-1. **Missing Customer Identifiers**: Up to 20–25% of transactions lack account IDs due to guest checkouts, point-of-sale cash purchases, or anonymous sessions.
-2. **Missing Product Metadata**: Item titles and descriptions are often missing, corrupt, or replaced with informal notes (`damaged`, `check`, `?`).
-3. **Flawed Relational Modeling**: Single flat-file exports cause massive redundancy, update anomalies, and prohibit efficient relational database indexing.
-
-**Martadinata CSV Imputer** solves this deterministically at scale without discarding valid business telemetry.
-
----
-
-## 💡 Engineering Highlights & Imputation Logic
-
-### 1. The Deterministic Regional Guest Account Pattern
-* Instead of dropping records with missing `Customer ID` (which would obliterate ~22% of revenue telemetry), the engine dynamically maps anonymous transactions to dedicated **Regional Guest Customer IDs** based on sovereign territory:
-  - `90001` → *Guest (Bahrain)*
-  - `90003` → *Guest (EIRE)*
-  - `90004` → *Guest (France)*
-  - `90015` → *Guest (United Kingdom)*
-* **Result**: Preserves 100% Foreign Key referential integrity (`NOT NULL` constraints intact) while keeping individual VIP spending analytics undistorted.
-
-### 2. Cross-Referenced Product Mode Recovery
-* If a `StockCode` SKU has missing descriptions in certain lines, the engine scans historical verified transactions and imputes the **statistical mode** (most frequent valid title).
-* For uncataloged items, it assigns a standardized label: `UNLISTED RETAIL ITEM [StockCode]`.
-* **Result**: Restores >85% of missing product titles with zero manual guesswork.
-
-### 3. Vectorized 3NF Relational Deconstruction
-Deconstructs flat files into 5 ACID-compliant relational entities:
-- **`customers.csv`** (`customer_id` PK, `country`, `customer_type`)
-- **`products.csv`** (`stock_code` PK, `description`, `standard_price`)
-- **`inventory.csv`** (`stock_code` PK/FK, `stock_level`, `last_updated`)
-- **`invoices.csv`** (`invoice_no` PK, `invoice_date`, `customer_id` FK, `status`)
-- **`invoice_items.csv`** (`item_id` PK, `invoice_no` FK, `stock_code` FK, `quantity`, `unit_price`)
+1. **Interactive Terminal Menu**: Run without flags to get an intuitive menu for choosing cleaning, verification, or full pipeline.
+2. **Missing Customer Imputation**: Deterministically maps anonymous transactions to dedicated **Regional Guest Customer IDs** (`90001+`), preserving 100% of telemetry without breaking Foreign Key constraints.
+3. **Missing Product Title Recovery**: Scans historical verified transactions for matching `StockCode` SKUs and imputes the statistical mode.
+4. **3NF Relational Deconstruction**: Outputs 5 normalized tables (`customers`, `products`, `inventory`, `invoices`, `invoice_items`).
+5. **Built-in Quality & Integrity Audit**: Verifies zero-null completeness and tests all Foreign Key relationships for zero orphan keys.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quickstart & How to Run
 
-### Prerequisites
-- Python 3.11+
-- Recommended fast runner: [`uv`](https://github.com/astral-sh/uv) (or standard `python`)
+### Method 1: Double-Click Runner (Windows)
+Simply double-click **`run.bat`** in File Explorer. Windows will launch the terminal and display the interactive menu immediately!
 
-### Installation & Run
+### Method 2: Direct Command in Terminal
+From PowerShell or CMD inside the repository folder:
 
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/geraldmartadinata/martadinata-csv-imputer.git
-   cd martadinata-csv-imputer
-   ```
+```powershell
+# Interactive Menu Mode (Recommended)
+uv run imputer.py
 
-2. **Run Demo (Out of the box with sample data):**
-   ```powershell
-   # Windows PowerShell runner:
-   .\run.ps1
-   ```
-   Or via `uv`:
-   ```bash
-   uv run imputer.py
-   ```
-
-3. **Process Your Own Datasets (Custom Input & Output):**
-   ```bash
-   uv run imputer.py --input "path/to/my_retail_data.xlsx" --output "path/to/cleaned_output"
-   ```
-
----
-
-## ⚙️ CLI Options
-
-```text
-usage: imputer.py [-h] [--input INPUT] [--output OUTPUT] [--guest-prefix GUEST_PREFIX]
-
-Martadinata CSV Imputer & 3NF Normalizer
-
-options:
-  -h, --help            Show this help message and exit
-  --input INPUT, -i INPUT
-                        Path to raw retail input file (.csv or .xlsx)
-                        [default: sample/raw_sample.csv]
-  --output OUTPUT, -o OUTPUT
-                        Directory to save 3NF normalized CSV files
-                        [default: output]
-  --guest-prefix GUEST_PREFIX
-                        Base numeric ID prefix for generated regional Guest Customer accounts
-                        [default: 90000]
+# Or run specific actions directly via flags:
+uv run imputer.py --all       # Run Clean + Audit Verification
+uv run imputer.py --clean     # Run Clean & Normalize only
+uv run imputer.py --verify    # Run Data Integrity Audit only
 ```
 
 ---
 
-## 📊 Performance Benchmark
+## 🖥️ Interactive Terminal Menu Preview
 
-Tested on a live commercial dataset of **1,048,575 rows**:
+When you run `imputer.py`, you will see:
 
 ```text
-                  Martadinata Retail - 3NF Database Entity Audit                   
-┌────────────────┬─────────────┬────────────┬───────────┬───────────────────┐
-│ Entity / Table │ Primary Key │ Total Rows │ File Size │ Destination File  │
-├────────────────┼─────────────┼────────────┼───────────┼───────────────────┤
-│ customers      │ customer_id │      5,939 │   0.18 MB │ customers.csv     │
-│ products       │ stock_code  │      5,130 │   0.20 MB │ products.csv      │
-│ inventory      │ stock_code  │      5,130 │   0.16 MB │ inventory.csv     │
-│ invoices       │ invoice_no  │     52,961 │   2.23 MB │ invoices.csv      │
-│ invoice_items  │ item_id     │  1,048,575 │  28.38 MB │ invoice_items.csv │
-└────────────────┴─────────────┴────────────┴───────────┴───────────────────┘
+ __  __             _             _ _            _         
+|  \/  | __ _ _ __ | |_ __ _   __| (_)_ __   __ _| |_ __ _  
+| |\/| |/ _` | '__|| __/ _` | / _` | | '_ \ / _` | __/ _` | 
+| |  | | (_| | |   | || (_| || (_| | | | | | (_| | || (_| | 
+|_|  |_|\__,_|_|    \__\__,_| \__,_|_|_| |_|\__,_|\__\__,_| 
+            C S V   I M P U T E R   &   3 N F               
+ High-Performance Data Engineering & Quality Assurance CLI • v1.1.0
 
-Execution Speed: ~8,740 records/second
-Referential Integrity: 100% PASS (Zero Orphan Keys)
-3NF Compliance: Fully Verified
+┌─────────────────────── Martadinata Data Core: ONLINE ───────────────────────┐
+│ Target Architecture: PostgreSQL / MySQL 3NF Compliant Schema                │
+│ Engine Capability: Vectorized Imputation • 3NF Deconstruction • Zero-Null    │
+│ Data Quality Standard: ACID Compliant • 3NF Normalized • Zero Orphan Keys   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Available Operations:
+ [1] Clean & Impute Raw Data -> Generate 3NF CSV Files
+ [2] Verify & Audit Processed Data (Zero-Null & Foreign Key Check)
+ [3] Full End-to-End Pipeline (Clean + Audit)
+ [4] Change Input / Output Paths
+ [5] Exit
+
+Enter option [1-5] (default: 3):
 ```
+
+---
+
+## ⚙️ CLI Options & Custom Datasets
+
+To process external datasets outside the default paths:
+
+```bash
+uv run imputer.py --input "path/to/my_data.xlsx" --output "path/to/output_dir"
+```
+
+| Flag | Short | Description |
+| :--- | :--- | :--- |
+| `--input` | `-i` | Path to raw retail input file (`.csv` or `.xlsx`) |
+| `--output` | `-o` | Destination directory for 3NF normalized CSV files |
+| `--clean` | | Execute cleaning and normalization directly |
+| `--verify` | | Execute automated quality and referential integrity audit directly |
+| `--all` | | Execute both cleaning and audit consecutively |
+| `--guest-prefix` | | Base numeric ID prefix for regional Guest Accounts (default: `90000`) |
+
+---
+
+## 📊 3NF Deconstruction Output
+
+| Entity | Primary Key | Description |
+| :--- | :--- | :--- |
+| **`customers.csv`** | `customer_id` | Customer directory (Registered accounts + Regional Guest mappings) |
+| **`products.csv`** | `stock_code` | Product catalog with sanitized descriptions and standard catalog prices |
+| **`inventory.csv`** | `stock_code` | Initial stock level ledger (ready for database inventory trigger integration) |
+| **`invoices.csv`** | `invoice_no` | Order master ledger with transaction timestamp, customer FK, and order status |
+| **`invoice_items.csv`** | `item_id` | Line-item detail ledger with quantity and historical billed unit price |
 
 ---
 
@@ -128,8 +108,9 @@ Referential Integrity: 100% PASS (Zero Orphan Keys)
 martadinata-csv-imputer/
 ├── sample/
 │   └── raw_sample.csv        # Lightweight demo file demonstrating missing values
-├── imputer.py                # Standalone vectorized CLI tool with Rich UI
-├── run.ps1                   # One-click Windows PowerShell runner
+├── imputer.py                # All-in-one CLI tool (interactive menu + ETL + audit suite)
+├── run.bat                   # Native Windows batch launcher (double-click friendly)
+├── run.ps1                   # PowerShell launcher
 ├── LICENSE                   # MIT License
 ├── .gitignore
 └── README.md
@@ -139,4 +120,4 @@ martadinata-csv-imputer/
 
 ## 📄 License
 Released under the [MIT License](LICENSE).  
-Authored by **Gerald Martadinata**. Contributions and feature requests are welcome!
+Authored by **Gerald Martadinata**.
