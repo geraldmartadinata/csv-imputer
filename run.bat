@@ -1,5 +1,5 @@
 @echo off
-title Martadinata CSV Imputer & 3NF Normalizer
+title CSV Imputer & 3NF Normalizer Engine
 cd /d "%~dp0"
 
 set "UV_PATH=C:\Users\steph\AppData\Local\hermes\bin\uv.exe"
@@ -17,7 +17,6 @@ if exist "%UV_PATH%" (
 
 if %errorlevel% neq 0 (
     echo.
-    echo [ERROR] Script finished with an error.
+    echo [ERROR] Script exited with an error code.
+    pause
 )
-
-pause

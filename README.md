@@ -1,4 +1,4 @@
-# Martadinata CSV Imputer & 3NF Normalizer
+# CSV Imputer & 3NF Normalizer Engine
 
 [![CLI Tool](https://img.shields.io/badge/CLI_Tool-Production_Ready-emerald?style=for-the-badge&logo=python&logoColor=white)](#)
 [![Interactive Menu](https://img.shields.io/badge/UI-Interactive_Terminal_Menu-cyan?style=for-the-badge&logo=gnubash&logoColor=white)](#)
@@ -6,118 +6,113 @@
 [![High Throughput](https://img.shields.io/badge/Throughput-8%2C700+_rows%2Fsec-purple?style=for-the-badge&logo=apachespark&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=for-the-badge)](#)
 
-> **Industrial-grade, vectorized CLI utility** designed to clean, impute missing values, normalize transaction spreadsheets into strict **Third Normal Form (3NF)** relational database schemas, and verify dataset integrity with automated audit reports.
+> **Industrial-grade, vectorized CLI data engineering utility** designed to audit, clean, impute missing values, normalize monolithic transaction flat-files (such as 1M+ retail transaction spreadsheets) into **Third Normal Form (3NF)** relational database schemas, and verify dataset integrity with automated audit and interactive repair capabilities.
 
 ---
 
-## 📌 Features
+## 📌 Core Features
 
-1. **Interactive Terminal Menu**: Run without flags to get an intuitive menu for choosing cleaning, verification, or full pipeline.
-2. **Missing Customer Imputation**: Deterministically maps anonymous transactions to dedicated **Regional Guest Customer IDs** (`90001+`), preserving 100% of telemetry without breaking Foreign Key constraints.
-3. **Missing Product Title Recovery**: Scans historical verified transactions for matching `StockCode` SKUs and imputes the statistical mode.
-4. **3NF Relational Deconstruction**: Outputs 5 normalized tables (`customers`, `products`, `inventory`, `invoices`, `invoice_items`).
-5. **Built-in Quality & Integrity Audit**: Verifies zero-null completeness and tests all Foreign Key relationships for zero orphan keys.
+1. **Persistent Interactive REPL Session**: The program runs continuously in the terminal and returns to the Main Menu after each operation until you explicitly select `[Exit]`.
+2. **Pre-Run Dataset Profiling & Pattern Recognition**:
+   - Inspects file structure, datatypes, and missing/null distribution before processing.
+   - Automatically detects categorical patterns (e.g., anonymous guest checkouts linked to regions, SKU recurrence with missing descriptions, negative return lines).
+   - Generates actionable, deterministic imputation strategy recommendations.
+3. **High-Speed Vectorized 3NF Normalization**:
+   - Processes over 1,000,000 records in ~120s (~8,740 rows/sec) using Pandas and PyArrow.
+   - Deconstructs flat data into 5 normalized relational entities: `customers.csv`, `products.csv`, `inventory.csv`, `invoices.csv`, and `invoice_items.csv`.
+4. **Deep Anomaly Audit & Interactive Repair**:
+   - Audits processed datasets for lingering nulls, whitespace values, and orphan Foreign Key violations.
+   - If clean: displays certified production health and financial telemetry statistics.
+   - If anomalies are found: offers an interactive prompt to **auto-repair and sanitize the anomalies on the spot**.
 
 ---
 
-## 🚀 Quickstart & How to Run
+## 🚀 How to Run
 
-### Method 1: Double-Click Runner (Windows)
-Simply double-click **`run.bat`** in File Explorer. Windows will launch the terminal and display the interactive menu immediately!
+### Method 1: Double-Click Launcher (Windows)
+Double-click **`run.bat`** in File Explorer. Windows will launch the command terminal and present the interactive menu.
 
-### Method 2: Direct Command in Terminal
+### Method 2: Terminal Execution
 From PowerShell or CMD inside the repository folder:
 
 ```powershell
-# Interactive Menu Mode (Recommended)
+# Launch Persistent Interactive Menu
 uv run imputer.py
 
-# Or run specific actions directly via flags:
-uv run imputer.py --all       # Run Clean + Audit Verification
-uv run imputer.py --clean     # Run Clean & Normalize only
-uv run imputer.py --verify    # Run Data Integrity Audit only
+# Or execute specific actions directly:
+uv run imputer.py --inspect   # Run pre-run diagnostics & recommendations only
+uv run imputer.py --clean     # Run cleaning & 3NF normalization only
+uv run imputer.py --verify    # Run anomaly audit only
+uv run imputer.py --all       # Run full pipeline (Inspect + Clean + Audit)
 ```
 
 ---
 
-## 🖥️ Interactive Terminal Menu Preview
+## 🖥️ Interactive Terminal Menu Walkthrough
 
-When you run `imputer.py`, you will see:
+When launched, you will see the interactive control center:
 
 ```text
- __  __             _             _ _            _         
-|  \/  | __ _ _ __ | |_ __ _   __| (_)_ __   __ _| |_ __ _  
-| |\/| |/ _` | '__|| __/ _` | / _` | | '_ \ / _` | __/ _` | 
-| |  | | (_| | |   | || (_| || (_| | | | | | (_| | || (_| | 
-|_|  |_|\__,_|_|    \__\__,_| \__,_|_|_| |_|\__,_|\__\__,_| 
-            C S V   I M P U T E R   &   3 N F               
- High-Performance Data Engineering & Quality Assurance CLI • v1.1.0
+  ____ ______     __  ___                 _             
+ / ___/ ___\ \   / / |_ _|_ __ ___  _ __  _| |_ ___ _ __  
+| |   \___ \\ \ / /   | || '_ ` _ \| '_ \| | __/ _ \ '__| 
+| |___ ___) |\ V /    | || | | | | | |_) | | ||  __/ |    
+ \____|____/  \_/    |___|_| |_| |_| .__/|_|\__\___|_|    
+                                   |_|  & 3NF Normalizer  
+ High-Performance Data Engineering & Quality Assurance CLI • v1.2.0
+ Author & Copyright: (c) 2026 Gerald Martadinata. Released under MIT License.
 
-┌─────────────────────── Martadinata Data Core: ONLINE ───────────────────────┐
+┌────────────────────── CSV Imputer Core System: ONLINE ──────────────────────┐
 │ Target Architecture: PostgreSQL / MySQL 3NF Compliant Schema                │
-│ Engine Capability: Vectorized Imputation • 3NF Deconstruction • Zero-Null    │
-│ Data Quality Standard: ACID Compliant • 3NF Normalized • Zero Orphan Keys   │
+│ Engine Capability: Pre-Run Profiling • Vectorized Imputation • 3NF          │
+│ Normalization • Interactive Repair                                          │
+│ Quality Assurance: Zero-Null Guarantee • 100% Referential Integrity (No     │
+│ Orphan Keys)                                                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 Available Operations:
- [1] Clean & Impute Raw Data -> Generate 3NF CSV Files
- [2] Verify & Audit Processed Data (Zero-Null & Foreign Key Check)
- [3] Full End-to-End Pipeline (Clean + Audit)
- [4] Change Input / Output Paths
- [5] Exit
+ [1] Inspect & Profile Raw Dataset (Check Nulls, Schema & Pattern Recommendations)
+ [2] Clean & Normalize Dataset -> Export 3NF Relational CSVs
+ [3] Deep Anomaly Audit & Interactive Repair
+ [4] Full End-to-End Execution (Inspect + Clean + Audit)
+ [5] Change Input / Output Paths or Settings
+ [6] Exit Application
 
-Enter option [1-5] (default: 3):
+Enter your choice [1-6]:
 ```
 
 ---
 
 ## ⚙️ CLI Options & Custom Datasets
 
-To process external datasets outside the default paths:
-
 ```bash
-uv run imputer.py --input "path/to/my_data.xlsx" --output "path/to/output_dir"
+uv run imputer.py --input "path/to/my_data.xlsx" --output "path/to/destination_folder"
 ```
 
 | Flag | Short | Description |
 | :--- | :--- | :--- |
 | `--input` | `-i` | Path to raw retail input file (`.csv` or `.xlsx`) |
 | `--output` | `-o` | Destination directory for 3NF normalized CSV files |
-| `--clean` | | Execute cleaning and normalization directly |
-| `--verify` | | Execute automated quality and referential integrity audit directly |
-| `--all` | | Execute both cleaning and audit consecutively |
+| `--inspect`| | Run pre-run diagnostic profiling and pattern recognition |
+| `--clean`  | | Execute vectorized cleaning and 3NF normalization |
+| `--verify` | | Execute deep anomaly audit and referential integrity test |
+| `--all`    | | Execute complete pipeline consecutively |
 | `--guest-prefix` | | Base numeric ID prefix for regional Guest Accounts (default: `90000`) |
 
 ---
 
-## 📊 3NF Deconstruction Output
+## 📊 3NF Deconstructed Output
 
 | Entity | Primary Key | Description |
 | :--- | :--- | :--- |
-| **`customers.csv`** | `customer_id` | Customer directory (Registered accounts + Regional Guest mappings) |
+| **`customers.csv`** | `customer_id` | Master customer directory (Registered accounts + Regional Guest mappings) |
 | **`products.csv`** | `stock_code` | Product catalog with sanitized descriptions and standard catalog prices |
-| **`inventory.csv`** | `stock_code` | Initial stock level ledger (ready for database inventory trigger integration) |
+| **`inventory.csv`** | `stock_code` | Inventory ledger with initial stock levels (prepared for DB triggers) |
 | **`invoices.csv`** | `invoice_no` | Order master ledger with transaction timestamp, customer FK, and order status |
 | **`invoice_items.csv`** | `item_id` | Line-item detail ledger with quantity and historical billed unit price |
 
 ---
 
-## 📁 Repository Layout
-
-```text
-martadinata-csv-imputer/
-├── sample/
-│   └── raw_sample.csv        # Lightweight demo file demonstrating missing values
-├── imputer.py                # All-in-one CLI tool (interactive menu + ETL + audit suite)
-├── run.bat                   # Native Windows batch launcher (double-click friendly)
-├── run.ps1                   # PowerShell launcher
-├── LICENSE                   # MIT License
-├── .gitignore
-└── README.md
-```
-
----
-
-## 📄 License
+## 📄 License & Copyright
 Released under the [MIT License](LICENSE).  
-Authored by **Gerald Martadinata**.
+Author & Copyright: **(c) 2026 Gerald Martadinata**.

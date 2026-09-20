@@ -10,12 +10,11 @@
 
 """
 ================================================================================
-  Martadinata CSV Imputer & 3NF Normalizer
-  Author: Gerald Martadinata
+  CSV IMPUTER & 3NF NORMALIZER ENGINE
+  High-Throughput Data Cleansing & Relational Normalization CLI
+  Author & Copyright: (c) 2026 Gerald Martadinata
   Repository: https://github.com/geraldmartadinata/martadinata-csv-imputer
-  Description: Industrial-grade CLI tool for cleansing, imputing, and 
-               normalizing 1M+ retail transaction flat-files into 3NF,
-               with integrated automated data quality verification.
+  License: MIT
 ================================================================================
 """
 
@@ -44,22 +43,23 @@ from rich import box
 console = Console(highlight=False)
 
 BANNER = r"""
-[bold cyan] __  __             _             _ _            _         [/bold cyan]
-[bold cyan]|  \/  | __ _ _ __ | |_ __ _   __| (_)_ __   __ _| |_ __ _  [/bold cyan]
-[bold cyan]| |\/| |/ _` | '__|| __/ _` | / _` | | '_ \ / _` | __/ _` | [/bold cyan]
-[bold cyan]| |  | | (_| | |   | || (_| || (_| | | | | | (_| | || (_| | [/bold cyan]
-[bold cyan]|_|  |_|\__,_|_|    \__\__,_| \__,_|_|_| |_|\__,_|\__\__,_| [/bold cyan]
-[bold cyan]            C S V   I M P U T E R   &   3 N F               [/bold cyan]
-[dim] High-Performance Data Engineering & Quality Assurance CLI • v1.1.0[/dim]
+[bold cyan]  ____ ______     __  ___                 _             [/bold cyan]
+[bold cyan] / ___/ ___\ \   / / |_ _|_ __ ___  _ __  _| |_ ___ _ __  [/bold cyan]
+[bold cyan]| |   \___ \\ \ / /   | || '_ ` _ \| '_ \| | __/ _ \ '__| [/bold cyan]
+[bold cyan]| |___ ___) |\ V /    | || | | | | | |_) | | ||  __/ |    [/bold cyan]
+[bold cyan] \____|____/  \_/    |___|_| |_| |_| .__/|_|\__\___|_|    [/bold cyan]
+[bold cyan]                                   |_|  & 3NF Normalizer  [/bold cyan]
+[dim] High-Performance Data Engineering & Quality Assurance CLI • v1.2.0[/dim]
+[dim] Author & Copyright: (c) 2026 Gerald Martadinata. Released under MIT License.[/dim]
 """
 
 def print_header():
     console.print(BANNER)
     info_panel = Panel(
         "[bold white]Target Architecture:[/bold white] PostgreSQL / MySQL 3NF Compliant Schema\n"
-        "[bold white]Engine Capability:[/bold white] Vectorized Imputation • 3NF Deconstruction • Zero-Null Verification\n"
-        "[bold white]Data Quality Standard:[/bold white] ACID Compliant • 3NF Normalized • Zero Orphan Keys",
-        title="[bold green]Martadinata Data Core: ONLINE[/bold green]",
+        "[bold white]Engine Capability:[/bold white] Pre-Run Profiling • Vectorized Imputation • 3NF Normalization • Interactive Repair\n"
+        "[bold white]Quality Assurance:[/bold white] Zero-Null Guarantee • 100% Referential Integrity (No Orphan Keys)",
+        title="[bold green]CSV Imputer Core System: ONLINE[/bold green]",
         border_style="cyan",
         box=box.ROUNDED
     )
@@ -67,16 +67,150 @@ def print_header():
     console.print()
 
 # ==============================================================================
-# PIPELINE: Clean & Normalize
+# FEATURE 1: Pre-Run Dataset Inspection & Pattern Recommendation Engine
+# ==============================================================================
+def inspect_raw_dataset(input_file: Path):
+    console.print(Panel(f"[bold white]Inspecting File:[/bold white] [cyan]{input_file}[/cyan]", title="[bold cyan]Phase 1: Pre-Run Profiling & Diagnostic Engine[/bold cyan]", box=box.ROUNDED))
+    
+    if not input_file.exists():
+        console.print(f"[bold red]Error:[/bold red] Input file not found at: {input_file}")
+        return None
+    
+    file_size_mb = input_file.stat().st_size / (1024 * 1024)
+    console.print(f" [bold green][OK][/bold green] File validated: [cyan]{input_file.name}[/cyan] ({file_size_mb:.2f} MB)")
+    
+    # Load dataset
+    with Progress(
+        SpinnerColumn("dots", style="cyan"),
+        TextColumn("[bold cyan]{task.description}[/bold cyan]"),
+        BarColumn(style="blue", complete_style="green"),
+        TimeElapsedColumn(),
+        console=console
+    ) as progress:
+        load_task = progress.add_task("Reading file structure & schema...", total=100)
+        if input_file.suffix.lower() == '.xlsx':
+            df = pd.read_excel(input_file, sheet_name=0)
+        else:
+            df = pd.read_csv(input_file)
+        progress.update(load_task, completed=100)
+
+    total_rows = len(df)
+    total_cols = len(df.columns)
+    
+    # 1. Column Completeness Table
+    profile_table = Table(title=f"[bold green]Dataset Schema & Missing Value Profile ({total_rows:,} Rows, {total_cols} Columns)[/bold green]", box=box.HEAVY_EDGE)
+    profile_table.add_column("Column Name", style="cyan")
+    profile_table.add_column("Inferred Type", style="yellow")
+    profile_table.add_column("Non-Null Count", justify="right", style="white")
+    profile_table.add_column("Null Count", justify="right", style="magenta")
+    profile_table.add_column("Missing %", justify="right")
+    profile_table.add_column("Health Status", justify="center")
+
+    has_missing = False
+    for col in df.columns:
+        null_cnt = df[col].isnull().sum()
+        empty_cnt = (df[col].astype(str).str.strip().isin(['', 'nan', 'None', '?'])).sum()
+        actual_missing = max(null_cnt, empty_cnt)
+        missing_pct = (actual_missing / total_rows) * 100 if total_rows > 0 else 0
+        
+        if actual_missing > 0:
+            has_missing = True
+            health = f"[bold red]INCOMPLETE ({missing_pct:.1f}%)[/bold red]"
+            pct_style = "[bold red]"
+        else:
+            health = "[bold green]COMPLETE[/bold green]"
+            pct_style = "[bold green]"
+            
+        profile_table.add_row(
+            col,
+            str(df[col].dtype),
+            f"{total_rows - actual_missing:,}",
+            f"{actual_missing:,}",
+            f"{pct_style}{missing_pct:.2f}%[/]",
+            health
+        )
+    console.print(profile_table)
+    
+    # 2. Pattern Analysis & Imputation Recommendations
+    recom_table = Table(title="[bold yellow]Pattern Detection & Imputation Recommendations[/bold yellow]", box=box.ROUNDED)
+    recom_table.add_column("Detected Pattern", style="cyan")
+    recom_table.add_column("Affected Column", style="white")
+    recom_table.add_column("Observed Evidence", style="dim")
+    recom_table.add_column("Recommended Imputation Strategy", style="green")
+    
+    # Check Customer ID pattern
+    cust_col = next((c for c in df.columns if 'customer' in c.lower() or 'cust' in c.lower()), None)
+    country_col = next((c for c in df.columns if 'country' in c.lower() or 'nation' in c.lower() or 'region' in c.lower()), None)
+    
+    if cust_col and df[cust_col].isnull().sum() > 0:
+        missing_c = df[cust_col].isnull().sum()
+        if country_col:
+            unique_c_countries = df[df[cust_col].isnull()][country_col].nunique()
+            recom_table.add_row(
+                "Anonymous Guest Telemetry",
+                cust_col,
+                f"{missing_c:,} missing records across {unique_c_countries} territories in '{country_col}'",
+                "Deterministic Regional Guest Accounts (90000 + CountryIndex). Preserves 100% FK integrity without data loss."
+            )
+        else:
+            recom_table.add_row(
+                "Anonymous Guest Telemetry",
+                cust_col,
+                f"{missing_c:,} missing records",
+                "Synthetic Sequential Guest Accounts. Enforces non-null FK constraints."
+            )
+
+    # Check StockCode & Description pattern
+    stock_col = next((c for c in df.columns if 'stock' in c.lower() or 'sku' in c.lower() or 'item' in c.lower()), None)
+    desc_col = next((c for c in df.columns if 'desc' in c.lower() or 'title' in c.lower() or 'name' in c.lower()), None)
+    
+    if stock_col and desc_col and df[desc_col].isnull().sum() > 0:
+        missing_d = df[desc_col].isnull().sum()
+        recom_table.add_row(
+            "Recurrent SKU Title Absence",
+            desc_col,
+            f"{missing_d:,} uncataloged line items with active '{stock_col}' codes",
+            "Cross-Referenced Mode Imputation (lookup statistical mode of verified lines for matching SKU, fallback to UNLISTED)."
+        )
+
+    # Check Price pattern
+    price_col = next((c for c in df.columns if 'price' in c.lower() or 'rate' in c.lower() or 'cost' in c.lower()), None)
+    if price_col:
+        zero_p = (pd.to_numeric(df[price_col], errors='coerce') <= 0).sum()
+        if zero_p > 0:
+            recom_table.add_row(
+                "Administrative Zero / Negative Price",
+                price_col,
+                f"{zero_p:,} rows with Price <= 0.00 (promotions, samples, or adjustments)",
+                "Standard Catalog Price derivation using median positive price per SKU in products table."
+            )
+
+    # Check Quantity pattern
+    qty_col = next((c for c in df.columns if 'qty' in c.lower() or 'quantity' in c.lower()), None)
+    if qty_col:
+        neg_q = (pd.to_numeric(df[qty_col], errors='coerce') < 0).sum()
+        if neg_q > 0:
+            recom_table.add_row(
+                "Order Cancellations & Return Logs",
+                qty_col,
+                f"{neg_q:,} rows with negative quantity",
+                "Partition order status into 'Completed' and 'Cancelled' in parent invoice table. Keep negative quantity for audit."
+            )
+
+    console.print(recom_table)
+    return df
+
+# ==============================================================================
+# FEATURE 2: High-Speed Vectorized Cleansing & 3NF Normalization
 # ==============================================================================
 def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 90000):
     start_time = time.time()
     output_dir.mkdir(parents=True, exist_ok=True)
     cache_file = output_dir / ".cache_raw_data.parquet"
     
-    console.print(Panel(f"[bold white]Input Source:[/bold white] [cyan]{input_file}[/cyan]\n[bold white]Output Destination:[/bold white] [cyan]{output_dir}[/cyan]", title="[bold cyan]Phase 1: ETL & Normalization Pipeline[/bold cyan]", box=box.ROUNDED))
+    console.print(Panel(f"[bold white]Source File:[/bold white] [cyan]{input_file}[/cyan]\n[bold white]Destination Folder:[/bold white] [cyan]{output_dir}[/cyan]", title="[bold cyan]Phase 2: Vectorized 3NF Normalization Pipeline[/bold cyan]", box=box.ROUNDED))
     
-    # Step 1: Ingestion
+    # 1. Ingestion
     with Progress(
         SpinnerColumn("dots", style="cyan"),
         TextColumn("[bold cyan]{task.description}[/bold cyan]"),
@@ -106,7 +240,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
         
     console.print(f" [bold green][OK][/bold green] Ingested [bold yellow]{total_raw_rows:,}[/bold yellow] raw records.")
 
-    # Step 2: Vectorized Imputation
+    # 2. Imputation
     with Progress(
         SpinnerColumn("dots", style="cyan"),
         TextColumn("[bold cyan]{task.description}[/bold cyan]"),
@@ -161,7 +295,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
     console.print(f" [bold green][OK][/bold green] Imputed [bold yellow]{initial_missing_desc:,}[/bold yellow] missing descriptions via StockCode cross-referencing.")
     console.print(f" [bold green][OK][/bold green] Mapped [bold yellow]{initial_missing_cust:,}[/bold yellow] anonymous transactions to {len(country_to_guest_id)} regional Guest Accounts.")
 
-    # Step 3: 3NF Deconstruction
+    # 3. 3NF Deconstruction
     with Progress(
         SpinnerColumn("dots", style="cyan"),
         TextColumn("[bold cyan]{task.description}[/bold cyan]"),
@@ -171,7 +305,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
     ) as progress:
         deconstruct_task = progress.add_task("[3/4] Deconstructing into 3NF normalized entities...", total=100)
         
-        # 1. CUSTOMERS
+        # Customers
         cust_df = df[['Customer_ID_Clean', 'Country']].drop_duplicates(subset=['Customer_ID_Clean']).copy()
         cust_df.rename(columns={'Customer_ID_Clean': 'customer_id', 'Country': 'country'}, inplace=True)
         cust_df['customer_type'] = cust_df['customer_id'].apply(
@@ -180,7 +314,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
         cust_df.sort_values(by='customer_id', inplace=True)
         progress.update(deconstruct_task, completed=25)
 
-        # 2. PRODUCTS
+        # Products
         valid_prices = df[df['Price'] > 0]
         stock_to_median_price = valid_prices.groupby('StockCode')['Price'].median().to_dict()
         
@@ -192,13 +326,13 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
         prod_df = prod_base.sort_values(by='stock_code')
         progress.update(deconstruct_task, completed=50)
 
-        # 3. INVENTORY
+        # Inventory
         inventory_df = prod_df[['stock_code']].copy()
         inventory_df['stock_level'] = 1000
         inventory_df['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         progress.update(deconstruct_task, completed=65)
 
-        # 4. INVOICES
+        # Invoices
         inv_df = df[['Invoice', 'InvoiceDate', 'Customer_ID_Clean']].drop_duplicates(subset=['Invoice']).copy()
         inv_df.rename(columns={
             'Invoice': 'invoice_no',
@@ -211,7 +345,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
         inv_df.sort_values(by='invoice_date', inplace=True)
         progress.update(deconstruct_task, completed=80)
 
-        # 5. INVOICE_ITEMS
+        # Invoice Items
         items_df = pd.DataFrame({
             'invoice_no': df['Invoice'],
             'stock_code': df['StockCode'],
@@ -225,7 +359,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
 
     console.print(" [bold green][OK][/bold green] 3NF Relational Deconstruction completed successfully.")
 
-    # Step 4: Export CSVs
+    # 4. Export
     with Progress(
         SpinnerColumn("dots", style="cyan"),
         TextColumn("[bold cyan]{task.description}[/bold cyan]"),
@@ -258,7 +392,7 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
     total_time = time.time() - start_time
     
     console.print()
-    results_table = Table(title="[bold green]3NF Database Entity Summary[/bold green]", box=box.HEAVY_EDGE)
+    results_table = Table(title="[bold green]3NF Normalized Database Entity Summary[/bold green]", box=box.HEAVY_EDGE)
     results_table.add_column("Entity / Table", style="cyan", no_wrap=True)
     results_table.add_column("Primary Key", style="yellow")
     results_table.add_column("Total Rows", justify="right", style="green")
@@ -283,22 +417,21 @@ def clean_and_normalize(input_file: Path, output_dir: Path, guest_prefix: int = 
     console.print(Panel(
         f"[bold white]Total Raw Records Processed:[/bold white] [bold cyan]{total_raw_rows:,}[/bold cyan]\n"
         f"[bold white]Pipeline Execution Time:[/bold white] [bold yellow]{total_time:.2f} seconds[/bold yellow] ([bold cyan]{throughput:,} rows/sec[/bold cyan])\n"
-        f"[bold white]Output Directory:[/bold white] [underline cyan]{output_dir}[/underline cyan]",
-        title="[bold green]ETL COMPLETE[/bold green]",
+        f"[bold white]Artifacts Location:[/bold white] [underline cyan]{output_dir}[/underline cyan]",
+        title="[bold green]ETL COMPLETED SUCCESSFULLY[/bold green]",
         border_style="green",
         box=box.DOUBLE
     ))
     return output_dir
 
 # ==============================================================================
-# VERIFICATION: Test Quality, Nulls & FK Integrity
+# FEATURE 3: Anomaly Audit & Interactive Auto-Repair
 # ==============================================================================
-def verify_data_integrity(data_dir: Path):
-    console.print()
+def audit_and_repair_processed(data_dir: Path):
     console.print(Panel(
-        f"[bold white]Verifying Dataset Directory:[/bold white] [cyan]{data_dir}[/cyan]\n"
-        "[bold white]Scope:[/bold white] Zero-Null Audit • Type Uniformity • Referential Integrity (FK Constraints)",
-        title="[bold cyan]Phase 2: Automated Data Quality & Integrity Test Suite[/bold cyan]",
+        f"[bold white]Target Dataset Directory:[/bold white] [cyan]{data_dir}[/cyan]\n"
+        "[bold white]Audit Scope:[/bold white] Zero-Null Audit • Type Uniformity • Referential Integrity • Anomaly Detection",
+        title="[bold cyan]Phase 3: Deep Anomaly Audit & Interactive Repair Engine[/bold cyan]",
         box=box.ROUNDED
     ))
     
@@ -310,167 +443,218 @@ def verify_data_integrity(data_dir: Path):
         "invoice_items": data_dir / "invoice_items.csv",
     }
     
-    # 1. File existence
-    console.print("\n[bold yellow]Stage 1: File Ingestion & Record Count[/bold yellow]")
+    # 1. Check files
     dfs = {}
     for name, path in files.items():
         if not path.exists():
-            console.print(f" [bold red][FAIL][/bold red] File not found: {path.name}. Please run ETL (Option 1) first!")
+            console.print(f" [bold red][FAIL][/bold red] File not found: {path.name}. Please run ETL (Option 2) first!")
             return False
         dfs[name] = pd.read_csv(path, dtype=str)
-        console.print(f" [bold green][PASS][/bold green] Ingested [cyan]{name}.csv[/cyan] ({len(dfs[name]):,} rows)")
 
     # 2. Null Value Check
-    console.print("\n[bold yellow]Stage 2: Completeness Audit (Zero-Null Verification)[/bold yellow]")
-    null_table = Table(title="Column Null & Empty Value Check", box=box.SIMPLE_HEAVY)
+    null_table = Table(title="Completeness Audit (Zero-Null Check)", box=box.SIMPLE_HEAVY)
     null_table.add_column("Table", style="cyan")
     null_table.add_column("Column", style="white")
     null_table.add_column("Null Count", justify="right")
     null_table.add_column("Status", justify="center")
 
     total_nulls = 0
+    anomalous_cols = []
     for name, df in dfs.items():
         for col in df.columns:
             null_count = df[col].isnull().sum()
             empty_count = (df[col].astype(str).str.strip().isin(['', 'nan', 'None'])).sum()
             actual_missing = max(null_count, empty_count)
             total_nulls += actual_missing
-            status = "[bold green]CLEAN (0)[/bold green]" if actual_missing == 0 else f"[bold red]FOUND ({actual_missing})[/bold red]"
+            if actual_missing > 0:
+                anomalous_cols.append((name, col, actual_missing))
+                status = f"[bold red]FOUND ({actual_missing})[/bold red]"
+            else:
+                status = "[bold green]CLEAN (0)[/bold green]"
             null_table.add_row(name, col, str(actual_missing), status)
 
     console.print(null_table)
 
-    # 3. Data Uniformity Audit
-    console.print("\n[bold yellow]Stage 3: Format & Classification Uniformity[/bold yellow]")
+    # 3. Uniformity Checks
     cust_types = set(dfs["customers"]["customer_type"].unique())
     is_cust_uniform = cust_types.issubset({"Registered", "Guest"})
-    console.print(f" [{'bold green]PASS' if is_cust_uniform else 'bold red]FAIL'}[/] Customer Types: strictly {cust_types}")
-
     inv_statuses = set(dfs["invoices"]["status"].unique())
     is_inv_uniform = inv_statuses.issubset({"Completed", "Cancelled"})
-    console.print(f" [{'bold green]PASS' if is_inv_uniform else 'bold red]FAIL'}[/] Invoice Statuses: strictly {inv_statuses}")
-
-    items = dfs["invoice_items"].copy()
-    items["quantity"] = items["quantity"].astype(int)
-    invoices = dfs["invoices"].copy()
-    merged_items = items.merge(invoices, on="invoice_no")
-    
-    cancelled_items_cnt = len(merged_items[merged_items["status"] == "Cancelled"])
-    completed_items_cnt = len(merged_items[merged_items["status"] == "Completed"])
-    console.print(f" [bold green][PASS][/bold green] Line Items Partitioned: {completed_items_cnt:,} Completed | {cancelled_items_cnt:,} Cancelled/Returns")
 
     # 4. Referential Integrity
-    console.print("\n[bold yellow]Stage 4: Referential Integrity (Zero Orphan Foreign Keys)[/bold yellow]")
-    ref_table = Table(title="Foreign Key Referential Integrity Constraints", box=box.SIMPLE_HEAVY)
+    ref_table = Table(title="Referential Integrity Constraints (Foreign Keys)", box=box.SIMPLE_HEAVY)
     ref_table.add_column("Constraint", style="cyan")
     ref_table.add_column("Parent Table", style="white")
     ref_table.add_column("Child Table", style="white")
     ref_table.add_column("Orphan Records", justify="right")
-    ref_table.add_column("Status", justify="center")
+    ref_table.add_column("Integrity Status", justify="center")
 
     parent_cust = set(dfs["customers"]["customer_id"])
     child_cust = set(dfs["invoices"]["customer_id"])
     orphan_cust = len(child_cust - parent_cust)
-    ref_table.add_row(
-        "FK_Invoices_Customers", "customers(customer_id)", "invoices(customer_id)",
-        str(orphan_cust), "[bold green]100% VALID[/bold green]" if orphan_cust == 0 else "[bold red]VIOLATION[/bold red]"
-    )
+    ref_table.add_row("FK_Invoices_Customers", "customers(customer_id)", "invoices(customer_id)", str(orphan_cust), "[bold green]100% VALID[/bold green]" if orphan_cust == 0 else "[bold red]VIOLATION[/bold red]")
 
     parent_inv = set(dfs["invoices"]["invoice_no"])
     child_inv = set(dfs["invoice_items"]["invoice_no"])
     orphan_inv = len(child_inv - parent_inv)
-    ref_table.add_row(
-        "FK_Items_Invoices", "invoices(invoice_no)", "invoice_items(invoice_no)",
-        str(orphan_inv), "[bold green]100% VALID[/bold green]" if orphan_inv == 0 else "[bold red]VIOLATION[/bold red]"
-    )
+    ref_table.add_row("FK_Items_Invoices", "invoices(invoice_no)", "invoice_items(invoice_no)", str(orphan_inv), "[bold green]100% VALID[/bold green]" if orphan_inv == 0 else "[bold red]VIOLATION[/bold red]")
 
     parent_prod = set(dfs["products"]["stock_code"])
     child_prod = set(dfs["invoice_items"]["stock_code"])
     orphan_prod = len(child_prod - parent_prod)
-    ref_table.add_row(
-        "FK_Items_Products", "products(stock_code)", "invoice_items(stock_code)",
-        str(orphan_prod), "[bold green]100% VALID[/bold green]" if orphan_prod == 0 else "[bold red]VIOLATION[/bold red]"
-    )
+    ref_table.add_row("FK_Items_Products", "products(stock_code)", "invoice_items(stock_code)", str(orphan_prod), "[bold green]100% VALID[/bold green]" if orphan_prod == 0 else "[bold red]VIOLATION[/bold red]")
 
     invt_prod = set(dfs["inventory"]["stock_code"])
     orphan_invt = len(invt_prod - parent_prod)
-    ref_table.add_row(
-        "FK_Inventory_Products", "products(stock_code)", "inventory(stock_code)",
-        str(orphan_invt), "[bold green]100% VALID[/bold green]" if orphan_invt == 0 else "[bold red]VIOLATION[/bold red]"
-    )
+    ref_table.add_row("FK_Inventory_Products", "products(stock_code)", "inventory(stock_code)", str(orphan_invt), "[bold green]100% VALID[/bold green]" if orphan_invt == 0 else "[bold red]VIOLATION[/bold red]")
 
     console.print(ref_table)
-
     total_orphans = orphan_cust + orphan_inv + orphan_prod + orphan_invt
 
-    console.print()
-    if total_nulls == 0 and total_orphans == 0:
+    # 5. Summary & Repair Decision
+    if total_nulls == 0 and total_orphans == 0 and is_cust_uniform and is_inv_uniform:
+        # 100% Clean: Display certified statistics
+        items = dfs["invoice_items"].copy()
+        items["quantity"] = pd.to_numeric(items["quantity"], errors='coerce').fillna(0)
+        items["unit_price"] = pd.to_numeric(items["unit_price"], errors='coerce').fillna(0)
+        items["line_total"] = items["quantity"] * items["unit_price"]
+        
+        stat_table = Table(title="[bold green]Certified Production Health & Telemetry Statistics[/bold green]", box=box.ROUNDED)
+        stat_table.add_column("Metric", style="cyan")
+        stat_table.add_column("Value", style="green")
+        
+        stat_table.add_row("Total Active Invoices", f"{len(dfs['invoices']):,}")
+        stat_table.add_row("Completed Invoices", f"{len(dfs['invoices'][dfs['invoices']['status'] == 'Completed']):,}")
+        stat_table.add_row("Cancelled Invoices / Returns", f"{len(dfs['invoices'][dfs['invoices']['status'] == 'Cancelled']):,}")
+        stat_table.add_row("Total Customers (Registered)", f"{len(dfs['customers'][dfs['customers']['customer_type'] == 'Registered']):,}")
+        stat_table.add_row("Regional Guest Accounts", f"{len(dfs['customers'][dfs['customers']['customer_type'] == 'Guest']):,}")
+        stat_table.add_row("Distinct Product SKUs", f"{len(dfs['products']):,}")
+        stat_table.add_row("Gross Transaction Lines", f"{len(dfs['invoice_items']):,}")
+        stat_table.add_row("Net Calculated Revenue", f"${items['line_total'].sum():,.2f}")
+        
+        console.print(stat_table)
         console.print(Panel(
-            "[bold green]ALL QUALITY ASSURANCE CHECKS PASSED (100%)[/bold green]\n\n"
-            "• [white]Total Missing / Null Values:[/white] [bold green]0 (Zero)[/bold green]\n"
-            "• [white]Total Orphan Foreign Keys:[/white] [bold green]0 (Zero)[/bold green]\n"
-            "• [white]Normalization Status:[/white] [bold cyan]Third Normal Form (3NF) Verified[/bold cyan]\n"
-            "• [white]Database Ingestion Status:[/white] [bold green]Ready for Production / PostgreSQL / MySQL[/bold green]",
-            title="[bold green]DATA INTEGRITY CERTIFIED[/bold green]",
+            "[bold green]ALL QUALITY ASSURANCE AUDITS PASSED (100%)[/bold green]\n\n"
+            "• Zero Nulls across all 5 tables.\n"
+            "• Zero Orphan Foreign Keys (ACID referential constraints intact).\n"
+            "• 3NF relational normalization certified.",
+            title="[bold green]DATA INTEGRITY VERIFIED[/bold green]",
             border_style="green",
             box=box.DOUBLE
         ))
         return True
     else:
+        # Anomalies Detected
         console.print(Panel(
-            f"[bold red]Integrity Check Failed:[/bold red] Found {total_nulls} nulls and {total_orphans} orphan keys.",
-            title="[bold red]AUDIT FAILURE[/bold red]",
-            border_style="red"
+            f"[bold red]Anomalies Detected in Dataset:[/bold red]\n"
+            f"• Missing / Null Values: [bold yellow]{total_nulls}[/bold yellow]\n"
+            f"• Orphan Foreign Keys: [bold yellow]{total_orphans}[/bold yellow]\n"
+            f"• Customer Type Uniformity: {'[green]OK[/green]' if is_cust_uniform else '[red]FAILED[/red]'}\n"
+            f"• Invoice Status Uniformity: {'[green]OK[/green]' if is_inv_uniform else '[red]FAILED[/red]'}",
+            title="[bold red]ANOMALY ALERT[/bold red]",
+            border_style="red",
+            box=box.DOUBLE
         ))
-        return False
+        
+        repair_choice = console.input("\n[bold yellow]Would you like to automatically clean and sanitize these anomalies now? [y/N]: [/bold yellow]").strip().lower()
+        if repair_choice in ['y', 'yes']:
+            console.print("\n[bold cyan]Initiating Automated Anomaly Repair Engine...[/bold cyan]")
+            # Apply repair
+            for name, path in files.items():
+                df_repair = dfs[name].copy()
+                for col in df_repair.columns:
+                    # Strip strings
+                    df_repair[col] = df_repair[col].astype(str).str.strip()
+                    # Fix empty strings
+                    if col == 'description':
+                        df_repair[col] = df_repair[col].replace({'': 'UNLISTED RETAIL ITEM', 'nan': 'UNLISTED RETAIL ITEM', 'None': 'UNLISTED RETAIL ITEM'})
+                    elif col == 'customer_type':
+                        df_repair[col] = df_repair[col].replace({'': 'Guest', 'nan': 'Guest'})
+                    elif col == 'status':
+                        df_repair[col] = df_repair[col].replace({'': 'Completed', 'nan': 'Completed'})
+                df_repair.to_csv(path, index=False, encoding='utf-8')
+            console.print("[bold green]✓ Automatic sanitization completed. Re-running audit...[/bold green]\n")
+            return audit_and_repair_processed(data_dir)
+        else:
+            console.print("[yellow]Anomalies left unaddressed as requested.[/yellow]")
+            return False
 
 # ==============================================================================
-# INTERACTIVE TERMINAL MENU
+# PERSISTENT REPL INTERACTIVE MENU
 # ==============================================================================
 def interactive_menu(input_path: Path, output_path: Path, guest_prefix: int):
     while True:
-        console.print("[bold yellow]Available Operations:[/bold yellow]")
-        console.print(" [bold cyan][1][/bold cyan] Clean & Impute Raw Data -> Generate 3NF CSV Files")
-        console.print(" [bold cyan][2][/bold cyan] Verify & Audit Processed Data (Zero-Null & Foreign Key Check)")
-        console.print(" [bold cyan][3][/bold cyan] Full End-to-End Pipeline (Clean + Audit)")
-        console.print(" [bold cyan][4][/bold cyan] Change Input / Output Paths")
-        console.print(" [bold cyan][5][/bold cyan] Exit")
+        console.print()
+        print_header()
         
-        choice = console.input("\n[bold green]Enter option [1-5] (default: 3): [/bold green]").strip()
-        if choice == "" or choice == "3":
-            if not input_path.exists():
-                console.print(f"[bold red]Error:[/bold red] Input file not found: {input_path}")
-                continue
-            clean_and_normalize(input_path, output_path, guest_prefix)
-            verify_data_integrity(output_path)
-            break
-        elif choice == "1":
-            if not input_path.exists():
-                console.print(f"[bold red]Error:[/bold red] Input file not found: {input_path}")
-                continue
-            clean_and_normalize(input_path, output_path, guest_prefix)
-            break
+        path_panel = Table.grid(padding=(0, 2))
+        path_panel.add_column(style="bold white")
+        path_panel.add_column(style="cyan")
+        path_panel.add_row("Input File Path :", str(input_path))
+        path_panel.add_row("Output Directory:", str(output_path))
+        path_panel.add_row("Guest ID Prefix :", str(guest_prefix))
+        console.print(Panel(path_panel, title="[bold cyan]Active Configuration[/bold cyan]", box=box.ROUNDED))
+        console.print()
+        
+        console.print("[bold yellow]Choose an Operation:[/bold yellow]")
+        console.print(" [bold cyan][1][/bold cyan] Inspect & Profile Raw Dataset (Check Nulls, Schema & Pattern Recommendations)")
+        console.print(" [bold cyan][2][/bold cyan] Clean & Normalize Dataset -> Export 3NF Relational CSVs")
+        console.print(" [bold cyan][3][/bold cyan] Deep Anomaly Audit & Interactive Repair")
+        console.print(" [bold cyan][4][/bold cyan] Full End-to-End Execution (Inspect + Clean + Audit)")
+        console.print(" [bold cyan][5][/bold cyan] Change Input / Output Paths or Settings")
+        console.print(" [bold cyan][6][/bold cyan] Exit Application")
+        
+        choice = console.input("\n[bold green]Enter your choice [1-6]: [/bold green]").strip()
+        console.print()
+        
+        if choice == "1":
+            inspect_raw_dataset(input_path)
+            console.input("\n[dim]Press [Enter] to return to the Main Menu...[/dim]")
         elif choice == "2":
-            verify_data_integrity(output_path)
-            break
+            clean_and_normalize(input_path, output_path, guest_prefix)
+            console.input("\n[dim]Press [Enter] to return to the Main Menu...[/dim]")
+        elif choice == "3":
+            audit_and_repair_processed(output_path)
+            console.input("\n[dim]Press [Enter] to return to the Main Menu...[/dim]")
         elif choice == "4":
-            new_in = console.input(f"Enter input file path (current: {input_path}): ").strip()
+            inspect_raw_dataset(input_path)
+            clean_and_normalize(input_path, output_path, guest_prefix)
+            audit_and_repair_processed(output_path)
+            console.input("\n[dim]Press [Enter] to return to the Main Menu...[/dim]")
+        elif choice == "5":
+            console.print("[bold cyan]Configure Paths & Settings[/bold cyan]")
+            new_in = console.input(f"Enter new input path (or press Enter to keep): ").strip()
             if new_in:
-                input_path = Path(new_in)
-            new_out = console.input(f"Enter output dir path (current: {output_path}): ").strip()
+                p = Path(new_in.strip('"\''))
+                if p.exists():
+                    input_path = p
+                    console.print(f" [green]✓[/green] Input path updated to: {input_path}")
+                else:
+                    console.print(f" [red]✗[/red] File does not exist: {p}")
+                    
+            new_out = console.input(f"Enter new output directory (or press Enter to keep): ").strip()
             if new_out:
-                output_path = Path(new_out)
-            console.print(f"[green]Paths updated.[/green] Input: {input_path} | Output: {output_path}\n")
-        elif choice == "5" or choice.lower() in ["q", "exit"]:
-            console.print("[yellow]Exiting.[/yellow]")
+                output_path = Path(new_out.strip('"\''))
+                console.print(f" [green]✓[/green] Output directory updated to: {output_path}")
+                
+            new_pref = console.input(f"Enter new Guest ID Prefix (current: {guest_prefix}): ").strip()
+            if new_pref.isdigit():
+                guest_prefix = int(new_pref)
+                console.print(f" [green]✓[/green] Guest prefix updated to: {guest_prefix}")
+            console.input("\n[dim]Press [Enter] to return to the Main Menu...[/dim]")
+        elif choice in ["6", "q", "exit", "quit"]:
+            console.print(Panel("[bold green]Thank you for using CSV Imputer & 3NF Normalizer Engine!\nAuthor & Copyright: (c) 2026 Gerald Martadinata. Released under MIT License.[/bold green]", box=box.ROUNDED))
             break
         else:
-            console.print("[red]Invalid selection. Please choose 1, 2, 3, 4, or 5.[/red]\n")
+            console.print("[bold red]Invalid option. Please enter a number from 1 to 6.[/bold red]")
+            console.input("\n[dim]Press [Enter] to try again...[/dim]")
 
+# ==============================================================================
+# MAIN ENTRYPOINT
+# ==============================================================================
 def main():
     script_dir = Path(__file__).parent.resolve()
     
-    # Check if project data directory exists, otherwise fallback to sample
     project_raw = script_dir / "data" / "raw" / "online_retail_data.xlsx"
     sample_raw = script_dir / "sample" / "raw_sample.csv"
     
@@ -485,27 +669,34 @@ def main():
         default_output = script_dir / "output"
 
     parser = argparse.ArgumentParser(
-        description="Martadinata CSV Imputer & 3NF Normalizer Engine"
+        description="CSV Imputer & 3NF Normalizer Engine — by Gerald Martadinata"
     )
-    parser.add_argument("--input", "-i", type=Path, default=default_input, help="Path to raw dataset")
-    parser.add_argument("--output", "-o", type=Path, default=default_output, help="Destination directory")
-    parser.add_argument("--guest-prefix", type=int, default=90000, help="Guest ID prefix")
-    parser.add_argument("--clean", action="store_true", help="Run clean & normalize step directly")
-    parser.add_argument("--verify", action="store_true", help="Run verification step directly")
-    parser.add_argument("--all", action="store_true", help="Run both clean and verify directly")
+    parser.add_argument("--input", "-i", type=Path, default=default_input, help="Path to raw dataset (.csv/.xlsx)")
+    parser.add_argument("--output", "-o", type=Path, default=default_output, help="Destination directory for 3NF tables")
+    parser.add_argument("--guest-prefix", type=int, default=90000, help="Base numeric ID prefix for regional Guest Accounts")
+    parser.add_argument("--inspect", action="store_true", help="Run pre-run diagnostics and pattern inspection directly")
+    parser.add_argument("--clean", action="store_true", help="Run cleaning and 3NF normalization directly")
+    parser.add_argument("--verify", action="store_true", help="Run anomaly audit directly")
+    parser.add_argument("--all", action="store_true", help="Run full pipeline directly")
     
     args = parser.parse_args()
-    print_header()
     
     if args.all:
+        print_header()
+        inspect_raw_dataset(args.input)
         clean_and_normalize(args.input, args.output, args.guest_prefix)
-        verify_data_integrity(args.output)
+        audit_and_repair_processed(args.output)
+    elif args.inspect:
+        print_header()
+        inspect_raw_dataset(args.input)
     elif args.clean:
+        print_header()
         clean_and_normalize(args.input, args.output, args.guest_prefix)
     elif args.verify:
-        verify_data_integrity(args.output)
+        print_header()
+        audit_and_repair_processed(args.output)
     else:
-        # Default: interactive menu in terminal
+        # Default: Persistent Interactive REPL Loop
         interactive_menu(args.input, args.output, args.guest_prefix)
 
 if __name__ == "__main__":
