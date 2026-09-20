@@ -13,7 +13,7 @@
   CSV IMPUTER & 3NF NORMALIZER ENGINE
   High-Throughput Data Cleansing & Relational Normalization CLI
   Author & Copyright: (c) 2026 Gerald Martadinata
-  Repository: https://github.com/geraldmartadinata/martadinata-csv-imputer
+  Repository: https://github.com/geraldmartadinata/csv-imputer
   License: MIT
 ================================================================================
 """
