@@ -104,6 +104,10 @@ uv run imputer.py --input "path/to/my_data.xlsx" --output "path/to/destination_f
 
 ## 📊 3NF Deconstructed Output
 
+<p align="center">
+  <img src="docs/erd.svg" alt="3NF Relational Database Architecture ERD" width="100%">
+</p>
+
 | Entity | Primary Key | Description |
 | :--- | :--- | :--- |
 | **`customers.csv`** | `customer_id` | Master customer directory (Registered accounts + Regional Guest mappings) |
