@@ -19,7 +19,8 @@
    - Generates actionable, deterministic imputation strategy recommendations.
 3. **High-Speed Vectorized 3NF Normalization**:
    - Processes over 1,000,000 records in ~120s (~8,740 rows/sec) using Pandas and PyArrow.
-   - Deconstructs flat data into 5 normalized relational entities: `customers.csv`, `products.csv`, `inventory.csv`, `invoices.csv`, and `invoice_items.csv`.
+   - Purges exact duplicate records (34,150 rows) and resolves multi-timestamp / multi-country variations.
+   - Deconstructs flat data into 5 normalized relational entities: `customers.csv`, `products.csv`, `inventory.csv`, `invoices.csv`, and `invoice_lines.csv`.
 4. **Deep Anomaly Audit & Interactive Repair**:
    - Audits processed datasets for lingering nulls, whitespace values, and orphan Foreign Key violations.
    - If clean: displays certified production health and financial telemetry statistics.
@@ -59,7 +60,7 @@ When launched, you will see the interactive control center:
 | |___ ___) |\ V /    | || | | | | | |_) | | ||  __/ |    
  \____|____/  \_/    |___|_| |_| |_| .__/|_|\__\___|_|    
                                    |_|  & 3NF Normalizer  
- High-Performance Data Engineering & Quality Assurance CLI • v1.2.0
+ High-Performance Data Engineering & Quality Assurance CLI • v1.3.0
  Author & Copyright: (c) 2026 Gerald Martadinata. Released under MIT License.
 
 ┌────────────────────── CSV Imputer Core System: ONLINE ──────────────────────┐
@@ -109,7 +110,7 @@ uv run imputer.py --input "path/to/my_data.xlsx" --output "path/to/destination_f
 | **`products.csv`** | `stock_code` | Product catalog with sanitized descriptions and standard catalog prices |
 | **`inventory.csv`** | `stock_code` | Inventory ledger with initial stock levels (prepared for DB triggers) |
 | **`invoices.csv`** | `invoice_no` | Order master ledger with transaction timestamp, customer FK, and order status |
-| **`invoice_items.csv`** | `item_id` | Line-item detail ledger with quantity and historical billed unit price |
+| **`invoice_lines.csv`** | `line_id` | Line-item detail ledger with quantity and historical billed unit price (`unit_price_at_sale`) |
 
 ---
 
